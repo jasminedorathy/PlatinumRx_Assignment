@@ -1,0 +1,137 @@
+SPREADSHEET GUIDE — Ticket_Analysis.xlsx
+========================================
+
+HOW TO BUILD THE SPREADSHEET MANUALLY IN EXCEL OR GOOGLE SHEETS
+----------------------------------------------------------------
+
+STEP 1: Create the workbook
+  - Open Microsoft Excel or Google Sheets
+  - Create TWO sheets (tabs at the bottom):
+      Sheet 1 → rename to: ticket
+      Sheet 2 → rename to: feedbacks
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SHEET 1: ticket
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Column headers (Row 1):
+  A: ticket_id
+  B: created_at
+  C: closed_at
+  D: outlet_id
+  E: cms_id
+
+Sample data (paste into rows 2 onward):
+
+ticket_id    | created_at              | closed_at               | outlet_id     | cms_id
+isu-sjd-457  | 2021-08-19 16:45:43     | 2021-08-22 12:33:32     | wrqy-juv-978  | vew-iuvd-12
+qer-fal-092  | 2021-08-21 11:09:22     | 2021-08-21 17:13:45     | 8woh-k3u-23b  | cms-ab12-34
+mnp-xyz-001  | 2021-08-21 09:00:00     | 2021-08-21 09:45:00     | wrqy-juv-978  | cms-cd56-78
+rst-uvw-002  | 2021-08-22 14:30:00     | 2021-08-23 10:00:00     | 8woh-k3u-23b  | cms-ef90-12
+opq-lmn-003  | 2021-08-23 08:00:00     | 2021-08-23 08:55:00     | wrqy-juv-978  | cms-gh34-56
+abc-def-004  | 2021-08-24 11:00:00     | 2021-08-24 11:30:00     | out-pqr-789   | cms-ij78-90
+ghi-jkl-005  | 2021-08-24 15:00:00     | 2021-08-25 09:00:00     | out-pqr-789   | cms-kl12-34
+vwx-yza-006  | 2021-08-25 10:00:00     | 2021-08-25 10:50:00     | wrqy-juv-978  | cms-mn56-78
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SHEET 2: feedbacks
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Column headers (Row 1):
+  A: cms_id
+  B: feedback_at
+  C: feedback_rating
+  D: ticket_created_at   ← this column will be auto-filled by formula
+
+Sample data (paste into rows 2 onward):
+
+cms_id        | feedback_at              | feedback_rating | ticket_created_at
+vew-iuvd-12   | 2021-08-21 13:26:48      | 3               | (formula goes here)
+cms-ab12-34   | 2021-08-22 09:00:00      | 5               | (formula goes here)
+cms-cd56-78   | 2021-08-22 10:00:00      | 4               | (formula goes here)
+cms-ef90-12   | 2021-08-23 12:00:00      | 2               | (formula goes here)
+cms-gh34-56   | 2021-08-24 08:30:00      | 5               | (formula goes here)
+cms-ij78-90   | 2021-08-25 14:00:00      | 3               | (formula goes here)
+cms-kl12-34   | 2021-08-26 09:00:00      | 4               | (formula goes here)
+cms-mn56-78   | 2021-08-26 15:00:00      | 5               | (formula goes here)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUESTION 1 — Fill ticket_created_at (Column D, feedbacks sheet)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In cell D2 of the feedbacks sheet, enter:
+
+    =VLOOKUP(A2, ticket!$E:$B, 2, FALSE)
+
+Explanation:
+  A2              = the cms_id we want to look up
+  ticket!$E:$B    = look in the ticket sheet, columns E (cms_id) to B (created_at)
+  2               = return the 2nd column of the range (created_at = col B)
+  FALSE           = exact match only
+
+Then drag/copy D2 down to all rows (D3, D4, D5, ...).
+
+Tip: Format column D as "Date Time" (yyyy-mm-dd hh:mm:ss) so the timestamp shows correctly.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUESTION 2a — Tickets closed on the SAME DAY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the ticket sheet, add column F with header "Same Day?":
+In cell F2, enter:
+
+    =IF(INT(B2)=INT(C2), "Yes", "No")
+
+  INT() strips the time portion → compares date part only
+  Copy down to all ticket rows.
+
+Then to get outlet-wise count, in a new area or sheet, with outlet IDs in one column
+and the formula in the next:
+
+    =COUNTIFS($D$2:$D$100, [outlet_id], $F$2:$F$100, "Yes")
+
+Or use a Pivot Table:
+  - Insert → Pivot Table
+  - Rows = outlet_id
+  - Values = Count of "Same Day?" (filtered to "Yes")
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUESTION 2b — Tickets closed in the SAME HOUR of the SAME DAY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the ticket sheet, add column G with header "Same Hour?":
+In cell G2, enter:
+
+    =IF(AND(INT(B2)=INT(C2), HOUR(B2)=HOUR(C2)), "Yes", "No")
+
+  INT(B2)=INT(C2)   → same date check
+  HOUR(B2)=HOUR(C2) → same hour check
+  Both must be true → "Yes"
+
+Then for outlet-wise count:
+
+    =COUNTIFS($D$2:$D$100, [outlet_id], $G$2:$G$100, "Yes")
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXPECTED RESULTS FROM SAMPLE DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After applying all formulas, the feedbacks sheet D column should show:
+
+  vew-iuvd-12  → 2021-08-19 16:45:43
+  cms-ab12-34  → 2021-08-21 11:09:22
+  cms-cd56-78  → 2021-08-21 09:00:00
+  ... and so on
+
+Same Day count (Q2a):
+  wrqy-juv-978 : 3 (rows: qer-fal-092, mnp-xyz-001, opq-lmn-003, vwx-yza-006 → check each)
+  8woh-k3u-23b : 1
+  out-pqr-789  : 1
+
+Same Hour count (Q2b):  (created and closed within same hour)
+  Tickets where both date AND hour match → typically fewer results
